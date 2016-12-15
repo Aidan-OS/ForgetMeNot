@@ -76,10 +76,44 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             mMap.setMyLocationEnabled(true);
         }
 
-        Context context = this.getApplicationContext();
-        File path = context.getFilesDir ();
-        File file = new File (path, "locations.bin");
+        LinkList listOfGeofences = new LinkList ();
+        RandomAccessFile raf = null;
+        try
+        {
+            raf = new RandomAccessFile (new File(getFilesDir(), "locations.bin"), "rw");
+            if (raf == null)
+            {
+                //Nothing in the file, nothing to load
+            }
 
+            else
+            {
+                byte [] byteName = new byte[16];
+                raf.read (byteName);
+                String name = new String (byteName, 0);
+
+                String firstLetter = name.substring (0, 1);
+                firstLetter.toUpperCase();
+                String afterFirstLetter = (name.substring (1) );
+
+                name = firstLetter;
+                name += afterFirstLetter;
+
+                name = name.trim ();
+
+                double radius = raf.readDouble();
+                double longitude = raf.readDouble();
+                double lattitude = raf.readDouble();
+                int minutes = raf.readInt();
+
+                GeoFence temp = new GeoFence (name, radius, longitude, lattitude, minutes);
+                listOfGeofences.addNode (temp);
+            }
+        }
+        catch (java.io.IOException e)
+        {
+            //Dont know why it thinks this is needed, but for some reason it thinks the file wont exist when it is making it.
+        }
     }
 
     protected synchronized void buildGoogleApiClient (){

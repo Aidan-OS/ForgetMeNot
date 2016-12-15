@@ -1,3 +1,5 @@
+package com.example.nehne.forgetmenot;
+
 public class LinkList
 {
     protected GeoFence top;

@@ -1,3 +1,5 @@
+package com.example.nehne.forgetmenot;
+
 public class GeoFence
 {
     private double radius, longitude, latitude, distance;
