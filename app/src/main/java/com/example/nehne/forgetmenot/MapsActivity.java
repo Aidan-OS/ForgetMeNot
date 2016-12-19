@@ -1,6 +1,7 @@
 package com.example.nehne.forgetmenot;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
@@ -12,6 +13,8 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -33,6 +36,7 @@ import android.Manifest;
 
 import java.io.*;
 
+import static com.example.nehne.forgetmenot.R.layout.activity_maps;
 import static com.google.android.gms.common.api.GoogleApiClient.*;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
@@ -40,16 +44,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     OnConnectionFailedListener,
     LocationListener{
 
+
     private GoogleApiClient mGoogleApiClient;
     private LocationRequest mLocationRequest;
     private GoogleMap mMap;
     private Location mLastLocation;
     private Marker mCurrLocationMarker;
+    private LinkList listOfGeofences = new LinkList ();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_maps);
+        setContentView(activity_maps);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -76,44 +82,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             mMap.setMyLocationEnabled(true);
         }
 
-        LinkList listOfGeofences = new LinkList ();
-        RandomAccessFile raf = null;
-        try
-        {
-            raf = new RandomAccessFile (new File(getFilesDir(), "locations.bin"), "rw");
-            if (raf == null)
-            {
-                //Nothing in the file, nothing to load
-            }
 
-            else
-            {
-                byte [] byteName = new byte[16];
-                raf.read (byteName);
-                String name = new String (byteName, 0);
 
-                String firstLetter = name.substring (0, 1);
-                firstLetter.toUpperCase();
-                String afterFirstLetter = (name.substring (1) );
-
-                name = firstLetter;
-                name += afterFirstLetter;
-
-                name = name.trim ();
-
-                double radius = raf.readDouble();
-                double longitude = raf.readDouble();
-                double lattitude = raf.readDouble();
-                int minutes = raf.readInt();
-
-                GeoFence temp = new GeoFence (name, radius, longitude, lattitude, minutes);
-                listOfGeofences.addNode (temp);
-            }
-        }
-        catch (java.io.IOException e)
-        {
-            //Dont know why it thinks this is needed, but for some reason it thinks the file wont exist when it is making it.
-        }
     }
 
     protected synchronized void buildGoogleApiClient (){
@@ -164,6 +134,55 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
         mCurrLocationMarker = mMap.addMarker(markerOptions);
 
+        RandomAccessFile raf = null;
+        try
+        {
+            raf = new RandomAccessFile (new File(getFilesDir(), "locations.bin"), "rw");
+            raf.writeInt (0);
+
+            int numberOfGeofences = raf.readInt ();
+
+            if (raf == null)
+            {
+                //Nothing in the file, nothing to load
+            }
+
+            else
+            {
+                for (int i = 0; i < numberOfGeofences; i++)
+                {
+                    byte[] byteName = new byte[16];
+                    raf.read(byteName);
+                    String name = new String(byteName, 0);
+
+                    String firstLetter = name.substring(0, 1);
+                    firstLetter.toUpperCase();
+                    String afterFirstLetter = (name.substring(1));
+
+                    name = firstLetter;
+                    name += afterFirstLetter;
+
+                    name = name.trim();
+
+                    double radius = raf.readDouble();
+                    double longitude = raf.readDouble();
+                    double lattitude = raf.readDouble();
+                    int minutes = raf.readInt();
+
+                    GeoFence temp = new GeoFence(name, radius, longitude, lattitude, minutes);
+                    listOfGeofences.addNode(temp);
+
+                    createMapMarker (lattitude, longitude, name);
+
+                }
+            }
+            raf.close();
+        }
+        catch (java.io.IOException e)
+        {
+            //Dont know why it thinks this is needed, but for some reason it thinks the file wont exist when it is making it.
+        }
+
 
         //move map camera
         mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
@@ -184,4 +203,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         markerOptions.icon (BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
         mCurrLocationMarker = mMap.addMarker(markerOptions);
     }
+
+
+    public void addButtonPressed (View v)
+    {
+        Intent i = new Intent (getApplicationContext(), AddView.class);
+        startActivity (i);
+    }
+
+    public void settingsButtonPressed (View v)
+    {
+        Intent i = new Intent (getApplicationContext (), SettingsView.class);
+        startActivity (i);
+    }
+
 }
