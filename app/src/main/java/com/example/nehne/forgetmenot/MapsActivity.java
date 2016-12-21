@@ -1,21 +1,16 @@
 package com.example.nehne.forgetmenot;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.location.LocationManager;
 import android.os.Build;
-import android.os.Handler;
+
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.view.View;
-import android.widget.Button;
-import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -50,7 +45,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleMap mMap;
     private Location mLastLocation;
     private Marker mCurrLocationMarker;
-    private LinkList listOfGeofences = new LinkList ();
+    public LinkList listOfGeofences = new LinkList ();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,6 +55,53 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+        //Generates list from memory
+        RandomAccessFile raf = null;
+        try
+        {
+            raf = new RandomAccessFile (new File(getFilesDir(), "locations.bin"), "rw");
+
+            int numberOfGeofences = raf.readInt ();
+
+            if (raf == null)
+            {
+                //Nothing in the file, nothing to load
+            }
+
+            else
+            {
+                for (int i = 0; i < numberOfGeofences; i++)
+                {
+                    byte[] byteName = new byte[16];
+                    raf.read(byteName);
+                    String name = new String(byteName, 0);
+
+                    String firstLetter = name.substring(0, 1);
+                    firstLetter.toUpperCase();
+                    String afterFirstLetter = (name.substring(1));
+
+                    name = firstLetter;
+                    name += afterFirstLetter;
+
+                    name = name.trim();
+
+                    double radius = raf.readDouble();
+                    double longitude = raf.readDouble();
+                    double lattitude = raf.readDouble();
+                    int minutes = raf.readInt();
+
+                    GeoFence temp = new GeoFence(name, radius, longitude, lattitude, minutes);
+                    listOfGeofences.addNode(temp);
+
+                }
+            }
+            raf.close();
+        }
+        catch (java.io.IOException e)
+        {
+            //Dont know why it thinks this is needed, but for some reason it thinks the file wont exist when it is making it.
+        }
     }
 
 
@@ -134,54 +176,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
         mCurrLocationMarker = mMap.addMarker(markerOptions);
 
-        RandomAccessFile raf = null;
-        try
+        GeoFence temp;
+        do
         {
-            raf = new RandomAccessFile (new File(getFilesDir(), "locations.bin"), "rw");
-            raf.writeInt (0);
+            temp = listOfGeofences.getTop ();
 
-            int numberOfGeofences = raf.readInt ();
-
-            if (raf == null)
+            if (temp == null)
             {
-                //Nothing in the file, nothing to load
+                break;
             }
 
             else
             {
-                for (int i = 0; i < numberOfGeofences; i++)
-                {
-                    byte[] byteName = new byte[16];
-                    raf.read(byteName);
-                    String name = new String(byteName, 0);
-
-                    String firstLetter = name.substring(0, 1);
-                    firstLetter.toUpperCase();
-                    String afterFirstLetter = (name.substring(1));
-
-                    name = firstLetter;
-                    name += afterFirstLetter;
-
-                    name = name.trim();
-
-                    double radius = raf.readDouble();
-                    double longitude = raf.readDouble();
-                    double lattitude = raf.readDouble();
-                    int minutes = raf.readInt();
-
-                    GeoFence temp = new GeoFence(name, radius, longitude, lattitude, minutes);
-                    listOfGeofences.addNode(temp);
-
-                    createMapMarker (lattitude, longitude, name);
-
-                }
+                createMapMarker (temp.getLatitude(), temp.getLongitude(), temp.getName());
             }
-            raf.close();
-        }
-        catch (java.io.IOException e)
-        {
-            //Dont know why it thinks this is needed, but for some reason it thinks the file wont exist when it is making it.
-        }
+
+        }while (temp.getNext () != null);
 
 
         //move map camera

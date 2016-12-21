@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -15,10 +16,60 @@
     <EditText
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:inputType="textPersonName"
-        android:text="Name"
+        android:inputType="text"
         android:ems="10"
-        android:id="@+id/nameOfPoint" />
+        android:id="@+id/nameOfPoint"
+        android:hint="Name" />
 
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="numberDecimal"
+        android:ems="10"
+        android:id="@+id/radius"
+        android:hint="Radius" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <EditText
+            android:layout_width="500dp"
+            android:layout_height="wrap_content"
+            android:inputType="textPersonName"
+            android:ems="10"
+            android:id="@+id/address"
+            android:layout_toStartOf="@+id/searchButton"
+            android:layout_toLeftOf="@+id/searchButton"
+            android:hint="Address" />
+
+        <Button
+            android:text="Search"
+            android:layout_width="116dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"
+            android:id="@+id/searchButton"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:onClick="onSearch"/>
+
+    </RelativeLayout>
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="number"
+        android:ems="10"
+        android:id="@+id/time"
+        android:hint="Time spent for Alert to Occur" />
+
+    <Button
+        android:text="Add Fence"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:id="@+id/finishButton"
+        android:onClick="onFinish"/>
 
 </LinearLayout>

@@ -9,6 +9,10 @@ public class LinkList
 	top = null;
     }
 
+	public GeoFence getTop ()
+    {
+        return (top);
+    }
 
     public void addNode (GeoFence lpr)
     {
