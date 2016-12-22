@@ -7,6 +7,7 @@ import android.view.View;
 import android.location.Address;
 import android.location.Geocoder;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import java.io.File;
 import java.io.IOException;
@@ -50,6 +51,12 @@ public class AddView extends FragmentActivity {
             Address address = addressList.get(0);
             latitude = address.getLatitude();
             longitude = address.getLongitude();
+
+            TextView myTextBox = (TextView) findViewById(R.id.textView2);
+            myTextBox.setText("" + latitude);
+
+            TextView myTextBox2 = (TextView) findViewById(R.id.textView4);
+            myTextBox.setText("" + longitude);
         }
     }
 

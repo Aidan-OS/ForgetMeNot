@@ -72,4 +72,41 @@
         android:id="@+id/finishButton"
         android:onClick="onFinish"/>
 
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <TextView
+            android:text="Latitude"
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/textView1" />
+
+        <TextView
+            android:text=""
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/textView2"
+            android:layout_toRightOf="@+id/textView1"/>
+    </RelativeLayout>
+
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:text="Longitude"
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/textView3" />
+
+        <TextView
+            android:text=""
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/textView4"
+            android:layout_toRightOf="@+id/textView3"/>
+    </RelativeLayout>
+
+
 </LinearLayout>
