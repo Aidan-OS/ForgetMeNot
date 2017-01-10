@@ -27,6 +27,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import android.Manifest;
+import android.widget.TextView;
 
 
 import java.io.*;
@@ -43,9 +44,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleApiClient mGoogleApiClient;
     private LocationRequest mLocationRequest;
     private GoogleMap mMap;
-    private Location mLastLocation;
+    public static Location mLastLocation;
     private Marker mCurrLocationMarker;
-    public LinkList listOfGeofences = new LinkList ();
+    public static LinkList listOfGeofences = new LinkList ();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,7 +92,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     double lattitude = raf.readDouble();
                     int minutes = raf.readInt();
 
-                    GeoFence temp = new GeoFence(name, radius, longitude, lattitude, minutes);
+                    double currentLat = mLastLocation.getLatitude();
+                    double currentLong = mLastLocation.getLongitude();
+
+                    GeoFence temp = new GeoFence(name, radius, longitude, lattitude, currentLong, currentLat, minutes);
                     listOfGeofences.addNode(temp);
 
                 }
@@ -176,22 +180,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
         mCurrLocationMarker = mMap.addMarker(markerOptions);
 
-        GeoFence temp;
-        do
-        {
-            temp = listOfGeofences.getTop ();
-
-            if (temp == null)
-            {
-                break;
-            }
-
-            else
-            {
-                createMapMarker (temp.getLatitude(), temp.getLongitude(), temp.getName());
-            }
-
-        }while (temp.getNext () != null);
+        updateMap();
 
 
         //move map camera
@@ -218,13 +207,45 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void addButtonPressed (View v)
     {
         Intent i = new Intent (getApplicationContext(), AddView.class);
-        startActivity (i);
+        startActivityForResult (i, 1);
     }
 
     public void settingsButtonPressed (View v)
     {
         Intent i = new Intent (getApplicationContext (), SettingsView.class);
-        startActivity (i);
+        startActivityForResult (i, 1);
     }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        // Check which request we're responding to
+        if (requestCode == 1) {
+            // Make sure the request was successful
+            updateMap();
+        }
+    }
+
+    public void updateMap ()
+    {
+        GeoFence temp;
+        do
+        {
+            temp = listOfGeofences.getTop ();
+
+            if (temp == null)
+            {
+                break;
+            }
+
+            else
+            {
+                createMapMarker (temp.getLatitude(), temp.getLongitude(), temp.getName());
+            }
+
+        }while (temp.getNext () != null);
+    }
+
+
+
 
 }

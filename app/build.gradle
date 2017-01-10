@@ -4,6 +4,7 @@ android {
     compileSdkVersion 24
     buildToolsVersion "25.0.1"
     defaultConfig {
+        multiDexEnabled true
         applicationId "com.example.nehne.forgetmenot"
         minSdkVersion 16
         targetSdkVersion 24

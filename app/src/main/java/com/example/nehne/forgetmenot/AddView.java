@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.List;
 
+import static com.example.nehne.forgetmenot.MapsActivity.mLastLocation;
+
 
 /**
  * Created by Aidan Smith on 2016-12-16.
@@ -56,7 +58,7 @@ public class AddView extends FragmentActivity {
             myTextBox.setText("" + latitude);
 
             TextView myTextBox2 = (TextView) findViewById(R.id.textView4);
-            myTextBox.setText("" + longitude);
+            myTextBox2.setText("" + longitude);
         }
     }
 
@@ -76,32 +78,12 @@ public class AddView extends FragmentActivity {
         EditText minutesBox = (EditText)findViewById(R.id.time);
         minutes= Integer.parseInt (minutesBox.getText().toString() );
 
-        GeoFence temp = new GeoFence (name, radius, longitude, latitude, minutes);
+        double currentLat = mLastLocation.getLatitude();
+        double currentLong = mLastLocation.getLongitude();
 
-        /*RandomAccessFile raf = null;
-        try
-        {
-            raf = new RandomAccessFile (new File(getFilesDir(), "locations.bin"), "rw");
+        GeoFence temp = new GeoFence (name, radius, longitude, latitude, currentLong, currentLat, minutes);
+        MapsActivity.listOfGeofences.addNode (temp);
 
-            int numberOfGeofences = raf.readInt ();
-            int newNumberOfGeofences = numberOfGeofences + 1;
-
-            raf.writeInt (newNumberOfGeofences);
-
-            raf.seek ((36 * numberOfGeofences) + 4);
-
-            raf.write (byteName);
-            raf.writeDouble (radius);
-            raf.writeDouble (longitude);
-            raf.writeDouble (latitude);
-            raf.writeInt (minutes);
-
-            raf.close();
-        }
-        catch (java.io.IOException e)
-        {
-            //Dont know why it thinks this is needed, but for some reason it thinks the file wont exist when it is making it.
-        }*/
 
         //END ADD VIEW
         finish();

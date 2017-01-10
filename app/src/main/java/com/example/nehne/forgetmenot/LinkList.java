@@ -1,5 +1,7 @@
 package com.example.nehne.forgetmenot;
 
+import com.example.nehne.forgetmenot.GeoFence;
+
 public class LinkList
 {
     protected GeoFence top;
@@ -10,9 +12,9 @@ public class LinkList
     }
 
 	public GeoFence getTop ()
-    {
-        return (top);
-    }
+	{
+		return (top);
+	}
 
     public void addNode (GeoFence lpr)
     {
@@ -52,6 +54,7 @@ public class LinkList
 	    return i;
 	}
     }
+
 
     public GeoFence getNode (String name)
     {
@@ -157,51 +160,75 @@ public class LinkList
     }
 
 
-    public void sortDistance (GeoFence link[])
+    public void arraySortDistance (GeoFence link[])
     {
-	GeoFence temp = new GeoFence ("temp", 0.0, 0.0, 0.0, 0);
-	int j;
-	GeoFence[] Sorted = new GeoFence [link.length + 1];
-	for (int i = 0 ; i < link.length + 1 ; i++)
+	int Switch = 1;
+	GeoFence Temp = new GeoFence ("temp", 0.0, 0.0, 0.0, 0.0, 0.0, 0);
+	while (Switch != 0)
 	{
-	    j = i;
-	    Sorted [j].setDistance (Sorted [j - 1].getLongitude (), Sorted [j - 1].getLatitude ());
-	    while (Sorted [j].getDistance () < Sorted [j - 1].getDistance ())
+	    Switch = 0;
+	    for (int j = 0 ; j < link.length - 1 ; j++)
 	    {
-		temp.setLongitude (Sorted [j].getLongitude ());
-		temp.setLatitude (Sorted [j].getLatitude ());
-		Sorted [j].setDistance (Sorted [j - 1].getLongitude (), Sorted [j - 1].getLatitude ());
-		Sorted [j - 1].setDistance (temp.getLongitude (), temp.getLatitude ());
-		j--;
+		if (link [j].getDistance () > link [j + 1].getDistance ())
+		{
+		    Temp.setName (link [j].getName ());
+		    Temp.setRadius (link [j].getRadius ());
+		    Temp.setLongitude (link [j].getLongitude ());
+		    Temp.setLatitude (link [j].getLatitude ());
+		    Temp.setDistance (link [j].getDistance ());
+		    Temp.setTime (link [j].getTime ());
+		    link [j].setName (link [j + 1].getName ());
+		    link [j].setRadius (link [j + 1].getRadius ());
+		    link [j].setLongitude (link [j + 1].getLongitude ());
+		    link [j].setLatitude (link [j + 1].getLatitude ());
+		    link [j].setDistance (link [j + 1].getDistance ());
+		    link [j].setTime (link [j + 1].getTime ());
+		    link [j + 1].setName (Temp.getName ());
+		    link [j + 1].setRadius (Temp.getRadius ());
+		    link [j + 1].setLongitude (Temp.getLongitude ());
+		    link [j + 1].setLatitude (Temp.getLatitude ());
+		    link [j + 1].setDistance (Temp.getDistance ());
+		    link [j + 1].setTime (Temp.getTime ());
+		    Switch = 1;
+		}
 	    }
-	}
-	for (int i = 1 ; i < Sorted.length ; i++)
-	{
-	    link [i - 1] = Sorted [i];
 	}
     }
 
 
-    public void sortName (GeoFence link[])
+
+    public void arraySortName (GeoFence link[])
     {
-	GeoFence temp = new GeoFence ("temp", 0.0, 0.0, 0.0, 0);
-	int j;
-	GeoFence[] Sorted = new GeoFence [link.length + 1];
-	for (int i = 0 ; i < link.length + 1 ; i++)
+	int Switch = 1;
+	GeoFence Temp = new GeoFence ("temp", 0.0, 0.0, 0.0, 0.0, 0.0, 0);
+	while (Switch != 0)
 	{
-	    j = i;
-	    Sorted [j].setName (Sorted [j - 1].getName ());
-	    while (Sorted [j].getName ().compareTo (Sorted [j - 1].getName ()) > 0)
+	    Switch = 0;
+	    for (int j = 0 ; j < link.length - 1 ; j++)
 	    {
-		temp.setName (Sorted [j].getName ());
-		Sorted [j].setName (Sorted [j - 1].getName ());
-		Sorted [j - 1].setName (temp.getName ());
-		j--;
+		if (link [j].getName ().compareTo (link [j + 1].getName ()) > 0)
+		{
+		    Temp.setName (link [j].getName ());
+		    Temp.setRadius (link [j].getRadius ());
+		    Temp.setLongitude (link [j].getLongitude ());
+		    Temp.setLatitude (link [j].getLatitude ());
+		    Temp.setDistance (link [j].getDistance ());
+		    Temp.setTime (link [j].getTime ());
+		    link [j].setName (link [j + 1].getName ());
+		    link [j].setRadius (link [j + 1].getRadius ());
+		    link [j].setLongitude (link [j + 1].getLongitude ());
+		    link [j].setLatitude (link [j + 1].getLatitude ());
+		    link [j].setDistance (link [j + 1].getDistance ());
+		    link [j].setTime (link [j + 1].getTime ());
+		    link [j + 1].setName (Temp.getName ());
+		    link [j + 1].setRadius (Temp.getRadius ());
+		    link [j + 1].setLongitude (Temp.getLongitude ());
+		    link [j + 1].setLatitude (Temp.getLatitude ());
+		    link [j + 1].setDistance (Temp.getDistance ());
+		    link [j + 1].setTime (Temp.getTime ());
+		    Switch = 1;
+		}
 	    }
-	}
-	for (int i = 1 ; i < Sorted.length ; i++)
-	{
-	    link [i - 1] = Sorted [i];
 	}
     }
 
@@ -245,6 +272,114 @@ public class LinkList
 	    }
 
     }
+
+
+    public void distanceSort ()
+    {
+	boolean switched = true;
+	GeoFence previous = null;
+	GeoFence current = null;
+	GeoFence after = null;
+
+
+	while (switched)
+	{
+	    current = top;
+	    after = current.getNext ();
+	    previous = null;
+	    switched = false;
+	    while (after != null)
+	    {
+		double currentDistance = current.getDistance ();
+		double afterDistance = after.getDistance ();
+
+		if (currentDistance > afterDistance && previous == null)
+		{
+		    current.setNext (after.getNext ());
+		    after.setNext (current);
+		    top = after;
+		    switched = true;
+		}
+
+		else if (currentDistance > afterDistance)
+		{
+		    current.setNext (after.getNext ());
+		    after.setNext (current);
+		    previous.setNext (after);
+		    switched = true;
+		}
+
+		if (previous == null)
+		{
+		    previous = top;
+		    current = previous.getNext ();
+		    after = current.getNext ();
+		}
+
+		else if (previous.getNext () != null)
+		{
+		    previous = previous.getNext ();
+		    current = previous.getNext ();
+		    after = current.getNext ();
+		}
+
+	    }
+	}
+    }
+
+    public void nameSort ()
+    {
+	boolean switched = true;
+	GeoFence previous = null;
+	GeoFence current = null;
+	GeoFence after = null;
+
+
+	while (switched)
+	{
+	    current = top;
+	    after = current.getNext ();
+	    previous = null;
+	    switched = false;
+	    while (after != null)
+	    {
+		String currentName = current.getName ();
+		String afterName = after.getName ();
+
+		if (currentName.compareTo(afterName) > 0 && previous == null)
+		{
+		    current.setNext (after.getNext ());
+		    after.setNext (current);
+		    top = after;
+		    switched = true;
+		}
+
+		else if (currentName.compareTo(afterName) > 0 )
+		{
+		    current.setNext (after.getNext ());
+		    after.setNext (current);
+		    previous.setNext (after);
+		    switched = true;
+		}
+
+		if (previous == null)
+		{
+		    previous = top;
+		    current = previous.getNext ();
+		    after = current.getNext ();
+		}
+
+		else if (previous.getNext () != null)
+		{
+		    previous = previous.getNext ();
+		    current = previous.getNext ();
+		    after = current.getNext ();
+		}
+
+	    }
+	}
+    }
 }
+// end bubbleSort
 
 

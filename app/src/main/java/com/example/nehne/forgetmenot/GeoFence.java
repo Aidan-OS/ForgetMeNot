@@ -2,20 +2,22 @@ package com.example.nehne.forgetmenot;
 
 public class GeoFence
 {
-    private double radius, longitude, latitude, distance;
+    private double radius, longitude, latitude, distance, currentLon, currentLat;
     private String name;
     private int minutes;
     private GeoFence nextGeoFence;
 
-    public GeoFence (String name, double radius, double longitude, double latitude, int minutes)
+    public GeoFence (String name, double radius, double longitude, double latitude, double currentLon , double currentLat, int minutes)
     {
 	this.name = name;
 	this.radius = radius;
 	this.longitude = longitude;
 	this.latitude = latitude;
+	this.currentLon = currentLon;
+	this.currentLat = currentLat;
 	this.minutes = minutes;
 	nextGeoFence = null;
-	distance = Math.sqrt (Math.pow (longitude, 2.0) + Math.pow (latitude, 2.0));
+	distance = Math.sqrt (Math.pow (currentLon - longitude, 2.0) + Math.pow (currentLat - latitude, 2.0));
     }
 
 
@@ -65,7 +67,29 @@ public class GeoFence
     {
 	this.longitude = longitude;
     }
+	
+    public double getCurrentLat ()
+    {
+	return currentLat;
+    }
 
+
+    public void setCurrentLat (double currentLat)
+    {
+	this.currentLat = currentLat;
+    }
+
+
+    public double getCurrentLon ()
+    {
+	return currentLon;
+    }
+
+
+    public void setCurrentLon (double currentLon)
+    {
+	this.currentLon = currentLon;
+    }   
 
     public GeoFence getNext ()
     {
@@ -97,9 +121,14 @@ public class GeoFence
     }
 
 
-    public void setDistance (double longitude, double latitude)
+    public void setDistance (double longitude, double latitude, double currentLon, double currentLat)
     {
-	distance = Math.sqrt (Math.pow (longitude, 2.0) + Math.pow (latitude, 2.0));
+	distance = Math.sqrt (Math.pow (currentLon - longitude, 2.0) + Math.pow (currentLat - latitude, 2.0));
+    }
+    
+    public void setDistance (double distance)
+    {
+	this.distance = distance;
     }
 
 
@@ -115,7 +144,7 @@ public class GeoFence
 	GeoFence link[] = new GeoFence [i];
 	for (int ctr = 0 ; ctr < link.length ; ctr++)
 	{
-	    link [ctr] = new GeoFence (current.getName (), current.getRadius (), current.getLongitude (), current.getLatitude (), current.getTime ());
+	    link [ctr] = new GeoFence (current.getName (), current.getRadius (), current.getLongitude (), current.getLatitude (), current.getCurrentLon (), current.getCurrentLat (),current.getTime ());
 	    current = current.getNext ();
 	}
 	return link;
