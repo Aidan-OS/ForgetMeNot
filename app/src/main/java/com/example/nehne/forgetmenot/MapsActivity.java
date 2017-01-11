@@ -44,9 +44,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleApiClient mGoogleApiClient;
     private LocationRequest mLocationRequest;
     private GoogleMap mMap;
-    public static Location mLastLocation;
+    private Location mLastLocation;
     private Marker mCurrLocationMarker;
     public static LinkList listOfGeofences = new LinkList ();
+    public static GeoFence currentGeofence = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,10 +93,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     double lattitude = raf.readDouble();
                     int minutes = raf.readInt();
 
-                    double currentLat = mLastLocation.getLatitude();
-                    double currentLong = mLastLocation.getLongitude();
 
-                    GeoFence temp = new GeoFence(name, radius, longitude, lattitude, currentLong, currentLat, minutes);
+                    GeoFence temp = new GeoFence(name, radius, longitude, lattitude, minutes);
                     listOfGeofences.addNode(temp);
 
                 }
@@ -106,6 +105,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         {
             //Dont know why it thinks this is needed, but for some reason it thinks the file wont exist when it is making it.
         }
+
+        startService(new Intent(this, NotificationService.class));
     }
 
 
@@ -166,32 +167,42 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     @Override
-        public void onLocationChanged(Location location) {
+    public void onLocationChanged(Location location) {
         mLastLocation = location;
         if (mCurrLocationMarker != null) {
             mCurrLocationMarker.remove();
         }
 
         //Place current location marker
-        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-        MarkerOptions markerOptions = new MarkerOptions();
-        markerOptions.position(latLng);
-        markerOptions.title("Current Location");
-        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
-        mCurrLocationMarker = mMap.addMarker(markerOptions);
-
         updateMap();
 
 
         //move map camera
+        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
         mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
         mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
 
         //stop location updates
+        //TODO DO I EVEN NEED THIS? TEST PLEASE!
         if (mGoogleApiClient != null) {
             LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
         }
+
+        //Checking if in a fence, if so, run the code for being inside one
+        boolean inFence = false;
+        currentGeofence = listOfGeofences.getTop();
+
+        while (currentGeofence.getNext () != null)
+        {
+            if (currentGeofence.getDistance(mLastLocation.getLatitude(), mLastLocation.getLongitude()) <= currentGeofence.getRadius())
+            {
+                startService(new Intent(this, NotificationService.class));
+                break;
+            }
         }
+
+
+    }
 
     public void createMapMarker (double lat, double lng, String name)
     {
@@ -200,7 +211,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         markerOptions.position (latLng);
         markerOptions.title (name);
         markerOptions.icon (BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
-        mCurrLocationMarker = mMap.addMarker(markerOptions);
+        mMap.addMarker(markerOptions);
     }
 
 
@@ -227,6 +238,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     public void updateMap ()
     {
+        //CLEARING THE MAP
+        mMap.clear();
+
+        //Regenerating all the markers
         GeoFence temp;
         do
         {
@@ -243,6 +258,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
 
         }while (temp.getNext () != null);
+
+        createMapMarker(mLastLocation.getLatitude(), mLastLocation.getLongitude(), "Current Location");
+
+
     }
 
 

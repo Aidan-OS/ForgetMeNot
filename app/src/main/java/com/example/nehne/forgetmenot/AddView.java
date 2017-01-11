@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.List;
 
-import static com.example.nehne.forgetmenot.MapsActivity.mLastLocation;
 
 
 /**
@@ -78,10 +77,8 @@ public class AddView extends FragmentActivity {
         EditText minutesBox = (EditText)findViewById(R.id.time);
         minutes= Integer.parseInt (minutesBox.getText().toString() );
 
-        double currentLat = mLastLocation.getLatitude();
-        double currentLong = mLastLocation.getLongitude();
 
-        GeoFence temp = new GeoFence (name, radius, longitude, latitude, currentLong, currentLat, minutes);
+        GeoFence temp = new GeoFence (name, radius, longitude, latitude, minutes);
         MapsActivity.listOfGeofences.addNode (temp);
 
 

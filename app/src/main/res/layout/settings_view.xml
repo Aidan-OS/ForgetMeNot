@@ -10,4 +10,11 @@
         android:layout_height="wrap_content"
         android:id="@+id/clearCacheButton"
         android:onClick="onClearCache"/>
+
+    <Button
+        android:text="Change Notification Sound"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/newNotificationSound"
+        android:onClick="onChangeRingtone"/>
 </LinearLayout>

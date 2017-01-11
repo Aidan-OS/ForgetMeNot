@@ -2,22 +2,20 @@ package com.example.nehne.forgetmenot;
 
 public class GeoFence
 {
-    private double radius, longitude, latitude, distance, currentLon, currentLat;
+    private double radius, longitude, latitude, distance;
     private String name;
     private int minutes;
     private GeoFence nextGeoFence;
 
-    public GeoFence (String name, double radius, double longitude, double latitude, double currentLon , double currentLat, int minutes)
+    public GeoFence (String name, double radius, double longitude, double latitude, int minutes)
     {
 	this.name = name;
 	this.radius = radius;
 	this.longitude = longitude;
 	this.latitude = latitude;
-	this.currentLon = currentLon;
-	this.currentLat = currentLat;
 	this.minutes = minutes;
 	nextGeoFence = null;
-	distance = Math.sqrt (Math.pow (currentLon - longitude, 2.0) + Math.pow (currentLat - latitude, 2.0));
+
     }
 
 
@@ -67,29 +65,7 @@ public class GeoFence
     {
 	this.longitude = longitude;
     }
-	
-    public double getCurrentLat ()
-    {
-	return currentLat;
-    }
 
-
-    public void setCurrentLat (double currentLat)
-    {
-	this.currentLat = currentLat;
-    }
-
-
-    public double getCurrentLon ()
-    {
-	return currentLon;
-    }
-
-
-    public void setCurrentLon (double currentLon)
-    {
-	this.currentLon = currentLon;
-    }   
 
     public GeoFence getNext ()
     {
@@ -115,9 +91,9 @@ public class GeoFence
     }
 
 
-    public double getDistance ()
+    public double getDistance (double currentLon, double currentLat)
     {
-	return distance;
+	    return (Math.sqrt (Math.pow (currentLon - longitude, 2.0) + Math.pow (currentLat - latitude, 2.0)));
     }
 
 
@@ -144,7 +120,7 @@ public class GeoFence
 	GeoFence link[] = new GeoFence [i];
 	for (int ctr = 0 ; ctr < link.length ; ctr++)
 	{
-	    link [ctr] = new GeoFence (current.getName (), current.getRadius (), current.getLongitude (), current.getLatitude (), current.getCurrentLon (), current.getCurrentLat (),current.getTime ());
+	    link [ctr] = new GeoFence (current.getName (), current.getRadius (), current.getLongitude (), current.getLatitude(), current.getTime ());
 	    current = current.getNext ();
 	}
 	return link;
