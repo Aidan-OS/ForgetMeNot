@@ -1,5 +1,6 @@
 package com.example.nehne.forgetmenot;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -7,6 +8,8 @@ import android.os.Build;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.multidex.MultiDex;
+import android.support.multidex.MultiDexApplication;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
@@ -25,9 +28,9 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import android.util.Log;
 
 import android.Manifest;
-import android.widget.TextView;
 
 
 import java.io.*;
@@ -40,14 +43,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     OnConnectionFailedListener,
     LocationListener{
 
-
     private GoogleApiClient mGoogleApiClient;
     private LocationRequest mLocationRequest;
     private GoogleMap mMap;
     private Location mLastLocation;
-    private Marker mCurrLocationMarker;
-    public static LinkList listOfGeofences = new LinkList ();
-    public static GeoFence currentGeofence = null;
+    private AidanGeoFenceLinkList listOfGeofences = new AidanGeoFenceLinkList ();
+    private boolean cameraZoomedOnStartup = false;
+    private boolean initRefresh = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,6 +60,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        MultiDex.install(this);
 
         //Generates list from memory
         RandomAccessFile raf = null;
@@ -79,13 +83,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     raf.read(byteName);
                     String name = new String(byteName, 0);
 
-                    String firstLetter = name.substring(0, 1);
-                    firstLetter.toUpperCase();
-                    String afterFirstLetter = (name.substring(1));
-
-                    name = firstLetter;
-                    name += afterFirstLetter;
-
                     name = name.trim();
 
                     double radius = raf.readDouble();
@@ -94,7 +91,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     int minutes = raf.readInt();
 
 
-                    GeoFence temp = new GeoFence(name, radius, longitude, lattitude, minutes);
+                    AidanGeoFence temp = new AidanGeoFence(name, radius, longitude, lattitude, minutes);
                     listOfGeofences.addNode(temp);
 
                 }
@@ -106,7 +103,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             //Dont know why it thinks this is needed, but for some reason it thinks the file wont exist when it is making it.
         }
 
-        startService(new Intent(this, NotificationService.class));
+        /*
+        AidanGeoFence test = new AidanGeoFence("Aidan's House", 5.0, -79.7298385, 43.4465535, 1);
+        AidanGeoFence saul = new AidanGeoFence("Saul's House", 5.0, 0, 0, 1);
+        AidanGeoFence currentLocationAddForTest = new AidanGeoFence("Oh god please", 0.5, -79.7335124, 43.4445535, 1);
+        listOfGeofences.addNode(test);
+        listOfGeofences.addNode(saul);
+        listOfGeofences.addNode(currentLocationAddForTest);*/
+
+
     }
 
 
@@ -129,8 +134,43 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             mMap.setMyLocationEnabled(true);
         }
 
+        //////////LETTING THE MAP SEE THAT YOU ARE TOUCHING THE POINTS
+        mMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
 
+            @Override
+            public void onMarkerDragStart(Marker marker) {
+                String[] latlng;
+                latlng = marker.getSnippet().split(", ");
 
+                double lat = Double.parseDouble(latlng [0]);
+                double lng = Double.parseDouble(latlng [1]);
+
+                AidanGeoFence editingGeoFence = listOfGeofences.searchLocation(lng, lat);
+                String editingName = editingGeoFence.getName();
+                double editingRadius = editingGeoFence.getRadius();
+                int editingTime = editingGeoFence.getTime();
+
+                //starts the edit view
+                Intent i = new Intent (getApplicationContext(), EditView.class);
+                i.putExtra ("name", editingName);
+                i.putExtra ("radius", editingRadius);
+                i.putExtra ("lng", lng);
+                i.putExtra ("lat", lat);
+                i.putExtra ("time", editingTime);
+                startActivityForResult (i, 2);
+
+            }
+
+            @Override
+            public void onMarkerDrag(Marker marker) {
+                //DONT CARE HERE
+            }
+
+            @Override
+            public void onMarkerDragEnd(Marker marker) {
+                //DONT CARE ON THIS
+            }
+        });
     }
 
     protected synchronized void buildGoogleApiClient (){
@@ -153,7 +193,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 == PackageManager.PERMISSION_GRANTED) {
             LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
         }
-
+        //Start Notifications
+        startService(new Intent(this, NotificationService.class));
+        Log.e ("Maps Activity", "I have started the Notification Service");
     }
 
     @Override
@@ -169,49 +211,38 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onLocationChanged(Location location) {
         mLastLocation = location;
-        if (mCurrLocationMarker != null) {
-            mCurrLocationMarker.remove();
+
+        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+
+        if (!initRefresh)
+        {
+            refreshMap();
+            initRefresh = true;
         }
 
-        //Place current location marker
-        updateMap();
-
-
-        //move map camera
-        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-        mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
+        //move map camera on startup
+        if (!cameraZoomedOnStartup) {
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+            mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
+            cameraZoomedOnStartup = true;
+        }
 
         //stop location updates
-        //TODO DO I EVEN NEED THIS? TEST PLEASE!
-        if (mGoogleApiClient != null) {
+        if (mGoogleApiClient == null) {
             LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
         }
-
-        //Checking if in a fence, if so, run the code for being inside one
-        boolean inFence = false;
-        currentGeofence = listOfGeofences.getTop();
-
-        while (currentGeofence.getNext () != null)
-        {
-            if (currentGeofence.getDistance(mLastLocation.getLatitude(), mLastLocation.getLongitude()) <= currentGeofence.getRadius())
-            {
-                startService(new Intent(this, NotificationService.class));
-                break;
-            }
-        }
-
-
     }
 
     public void createMapMarker (double lat, double lng, String name)
     {
-        LatLng latLng = new LatLng (lat, lng);
-        MarkerOptions markerOptions = new MarkerOptions();
-        markerOptions.position (latLng);
-        markerOptions.title (name);
-        markerOptions.icon (BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
-        mMap.addMarker(markerOptions);
+            LatLng latLng = new LatLng(lat, lng);
+            MarkerOptions markerOptions = new MarkerOptions();
+            markerOptions.position(latLng);
+            markerOptions.title(name);
+            markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+            markerOptions.draggable(true);
+            markerOptions.snippet("" + lat + ", " + lng);
+            mMap.addMarker(markerOptions);
     }
 
 
@@ -224,44 +255,153 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void settingsButtonPressed (View v)
     {
         Intent i = new Intent (getApplicationContext (), SettingsView.class);
-        startActivityForResult (i, 1);
+        startActivityForResult (i, 3);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
         // Check which request we're responding to
-        if (requestCode == 1) {
-            // Make sure the request was successful
-            updateMap();
+
+        //RETURNING FROM ADD
+        if (requestCode == 1 && Activity.RESULT_OK == resultCode) {
+            String name = (String) data.getSerializableExtra("name");
+            double radius = (double) data.getSerializableExtra("radius");
+            double latitude = (double) data.getSerializableExtra("lat");
+            double longitude = (double) data.getSerializableExtra("lng");
+            int time = (int) data.getSerializableExtra("time");
+
+            AidanGeoFence temp = new AidanGeoFence(name, radius, latitude, longitude, time);
+            listOfGeofences.addNode(temp);
         }
+
+        //IF WAS EDITING
+        if (requestCode == 2 && resultCode == Activity.RESULT_OK){
+            boolean wasDeleted = (boolean) data.getSerializableExtra("deleted");
+            Log.e ("Deleting off of an edit", "I am deleting node: " + wasDeleted);
+
+            //IF ARENT CHANGING, JUST REMOVING
+            if (wasDeleted == true)
+            {
+                double latitude = (double) data.getSerializableExtra("lat");
+                double longitude = (double) data.getSerializableExtra("lng");
+                listOfGeofences.deleteNode(latitude, longitude);
+
+
+            }
+
+            //IF ARE CHANGING
+            else
+            {
+                String name = (String) data.getSerializableExtra("name");
+                double radius = (double) data.getSerializableExtra("radius");
+                double latitude = (double) data.getSerializableExtra("lat");
+                double longitude = (double) data.getSerializableExtra("lng");
+                int time = (int) data.getSerializableExtra("time");
+
+                double absLatitude = (double) data.getSerializableExtra("absLat");
+                double absLongitude = (double) data.getSerializableExtra("absLng");
+
+                listOfGeofences.deleteNode(absLatitude, absLongitude);
+
+                AidanGeoFence temp = new AidanGeoFence(name, radius, longitude, latitude, time);
+                listOfGeofences.addNode(temp);
+            }
+        }
+
+        //RETURNING FROM SETTINGS VIEW
+        if (requestCode == 3 && resultCode == Activity.RESULT_OK){
+            int whatToDo = (int) data.getSerializableExtra("doThis");
+
+            if (whatToDo == 0)
+            {
+                listOfGeofences.clear ();
+            }
+        }
+
+        cameraZoomedOnStartup = false;
+        saveData();
+        refreshMap();
     }
 
-    public void updateMap ()
+    public void refreshMap ()
     {
         //CLEARING THE MAP
         mMap.clear();
 
+
         //Regenerating all the markers
-        GeoFence temp;
-        do
+        AidanGeoFence temp;
+        temp = listOfGeofences.getTop ();
+
+        if (temp != null){
+
+            while (temp.getNextGeoFence () != null)
+            {
+
+                if (temp == null)
+                {
+                    break;
+                }
+
+                else
+                {
+                    createMapMarker (temp.getLatitude(), temp.getLongitude(), temp.getName());
+                    Log.e("Update Map", "I am adding a geofence to the map. Its name is: " + temp.getName());
+                }
+
+                temp = temp.getNextGeoFence();
+            }
+
+
+            if (temp != null) {
+                createMapMarker(temp.getLatitude(), temp.getLongitude(), temp.getName());
+                Log.e("Update Map", "I am adding a geofence to the map. Its name is: " + temp.getName());
+            }
+        }
+    }
+
+    public void saveData ()
+    {
+        RandomAccessFile raf;
+        try
         {
-            temp = listOfGeofences.getTop ();
+            raf = new RandomAccessFile (new File(getFilesDir(), "locations.bin"), "rw");
+            int numberOfGeofences = listOfGeofences.linkListLength();
 
-            if (temp == null)
+            raf.writeInt(numberOfGeofences);
+
+            if (numberOfGeofences > 0)
             {
-                break;
+                AidanGeoFence currentFence = listOfGeofences.getTop();
+                for (int i = 0; i < numberOfGeofences; i++) {
+
+                    byte[] byteName = new byte[16];
+                    String name = currentFence.getName();
+
+                    name.getBytes(0, name.length(), byteName, 0);
+
+                    double radius = currentFence.getRadius();
+                    double longitude = currentFence.getLongitude();
+                    double latitude = currentFence.getLatitude();
+                    int minutes = currentFence.getTime();
+
+                    raf.write (byteName);
+                    raf.writeDouble (radius);
+                    raf.writeDouble (longitude);
+                    raf.writeDouble (latitude);
+                    raf.writeInt (minutes);
+
+                    currentFence = currentFence.getNextGeoFence();
+                }
+
+                raf.close();
             }
-
-            else
-            {
-                createMapMarker (temp.getLatitude(), temp.getLongitude(), temp.getName());
-            }
-
-        }while (temp.getNext () != null);
-
-        createMapMarker(mLastLocation.getLatitude(), mLastLocation.getLongitude(), "Current Location");
-
-
+        }
+        catch (java.io.IOException e)
+        {
+            //Dont know why it thinks this is needed, but for some reason it thinks the file wont exist when it is making it.
+        }
     }
 
 

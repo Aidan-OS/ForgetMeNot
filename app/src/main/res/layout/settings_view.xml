@@ -17,4 +17,11 @@
         android:layout_height="wrap_content"
         android:id="@+id/newNotificationSound"
         android:onClick="onChangeRingtone"/>
+
+    <Button
+        android:text="Cause Notification"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/testNotification"
+        android:onClick="onTestRingtone"/>
 </LinearLayout>

@@ -5,7 +5,7 @@
     android:layout_height="match_parent">
 
     <TextView
-        android:text="Add a New Fence"
+        android:text="Edit a Fence"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/titleText"
@@ -105,12 +105,19 @@
         android:hint="Grace Period (Minutes)" />
 
     <Button
-        android:text="Add Fence"
+        android:text="Edit Fence"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:id="@+id/finishButton"
         android:onClick="onFinish"/>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Delete Fence"
+        android:id="@+id/deleteButton"
+        android:onClick="onDelete"/>
 
 
 
