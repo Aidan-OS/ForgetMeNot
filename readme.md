@@ -1,0 +1,1 @@
+This repository contains a simple android application meant to remind you to check for items you may have left behind. This application was built for a much older version of android and will not be updated.
